@@ -1,0 +1,101 @@
+---
+# Handlers for neutron notifications
+- name: test status vxlan
+  shell: ls /etc/init.d/ |grep -q  veth_peers
+  ignore_errors: True
+  register: result
+
+- name: copy veth_peers
+  template: src=veth_peers.sh dest=/etc/init.d/veth_peers  mode=0755
+  when: result|failed
+
+- name: start veth-peer
+  command: sudo {{ item }} 
+  with_items:
+   - "/etc/init.d/veth_peers start"
+   - "chkconfig veth_peers on"
+  when: result|failed
+
+- name: config l3_agent.ini
+  command: openstack-config --set /etc/neutron/l3_agent.ini DEFAULT {{ item }}
+  with_items:
+   - "interface_driver neutron.agent.linux.interface.BridgeInterfaceDriver"
+   - "external_network_bridge ' '"
+  when: result|failed
+
+
+- name: config neutron.conf
+  command: openstack-config --set /etc/neutron/neutron.conf DEFAULT {{ item }}
+  with_items:
+   - "enable_rate_limit True"
+   - "enable_ratelimit_for_floating_ip False"
+   - "ratelimit_driver neutron.common.ratelimit_driver.RateLimitTCDriver"
+   - "default_netdev_rate 1"
+   - "max_netdev_rate 1000"
+   - "max_netdev_burst 100"
+  when: result|failed
+
+- name: add config to ml2_conf.ini 
+  command: openstack-config --set /etc/neutron/plugins/ml2/ml2_conf.ini {{ item }}
+  with_items:
+   - "ml2 mechanism_drivers linuxbridge"
+   - "ml2 tenant_network_types vxlan"
+   - "ml2_type_vxlan vni_ranges 10:10000"
+   - "securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver"
+   - "agent tunnel_types vxlan"
+  when: result|failed
+
+- name: config dhcp_agent.ini 
+  command: openstack-config --set /etc/neutron/dhcp_agent.ini DEFAULT {{ item }}
+  with_items:
+    - "interface_driver neutron.agent.linux.interface.BridgeInterfaceDriver"
+    - "dnsmasq_config_file /etc/neutron/neutron.dnsmasq.conf"
+  when: result|failed
+
+- name: del config to ml2_conf.ini 
+  command: openstack-config --del /etc/neutron/plugins/ml2/ml2_conf.ini ml2_type_gre tunnel_id_ranges
+
+- name: copy neutron-dnsmasq.conf
+  template: src=neutron-dnsmasq.conf dest=/etc/neutron/neutron.dnsmasq.conf owner=neutron group=neutron mode=0744
+
+  when: result|failed
+- name: config linuxbridge_conf.ini
+  command: openstack-config --set /etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini {{ item }}
+  with_items:
+   - "linux_bridge  physical_interface_mappings physnet1:br-p"
+   - "vxlan enable_vxlan True"
+   - "vxlan vxlan_group 224.0.0.1"
+   - "securitygroup firewall_driver neutron.agent.linux.iptables_firewall.IptablesFirewallDriver"
+  when: result|failed
+- name: config linuxbridge_conf.ini local_ip
+  command: openstack-config --set /etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini vxlan local_ip {{ ansible_br_mgmt.ipv4.address }}
+
+  when: result|failed
+- name: restart network service
+  command: sudo {{ item }}
+  with_items:
+   - "/etc/init.d/neutron-server restart"
+   - "crm resource restart p_neutron-dhcp-agent"
+   - "crm resource restart  p_neutron-l3-agent"
+   - "/etc/init.d/neutron-linuxbridge-agent restart"
+  when: result|failed
+
+- name: add to iptables dhcp port 
+  command: sudo {{ item }}
+  with_items:
+    - "iptables -I INPUT -p udp --dport 8472 -j ACCEPT"
+    - "/etc/init.d/iptables save"
+  when: result|failed
+
+#- name: del openvswitch agent to database
+#  command: source /root/openrc ;for i in `neutron agent-list |grep "Open vSwitch agent" |awk '{print $2}'`;do neutron agent-delete $i ;done
+
+- name: restart neutron all service
+  command: sudo {{ item }}
+  with_items:
+   - "/etc/init.d/neutron-server restart"
+   - "/etc/init.d/neutron-linuxbridge-agent restart"
+   - "crm resource restart p_neutron-dhcp-agent"
+   - "crm resource restart p_neutron-l3-agent"
+   - "crm resource restart p_neutron-metadata-agent"
+  when: result|failed

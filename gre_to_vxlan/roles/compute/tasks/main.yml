@@ -1,0 +1,41 @@
+---
+- name: compute openvswitch status
+  shell: /etc/init.d/neutron-openvswitch-agent status
+  ignore_errors: True
+  register: result
+
+
+- name: stop compute openvswitch
+  service: name=neutron-openvswitch-agent state=stopped
+  when: result|success
+
+- name: copy neuton file to controller
+  command: sudo {{ item }}
+  with_items: 
+   - "mv /etc/neutron /etc/neutron.bak"
+   - "scp -r node-13:/etc/neutron /etc/neutron"
+   - "chown neutron:neutron -R /etc/neutron"
+  #when: result|success
+
+- name: config nentron.conf 
+  command: openstack-config --set /etc/neutron/neutron.conf DEFAULT rabbit_hosts {{ansible_br_mgmt.ipv4.address }}:5673
+  #when: result|success
+
+- name: add config  linuxbridge_conf.ini
+  command: openstack-config --set /etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini vxlan local_ip {{ ansible_br_mgmt.ipv4.address }}
+  #when: result|success
+
+- name: del config  linuxbridge_conf.ini
+  command: openstack-config --del /etc/neutron/plugins/linuxbridge/linuxbridge_conf.ini linux_bridge  physical_interface_mappings
+  #when: result|success
+
+- name: start linuxbridge 
+  service: name=neutron-linuxbridge-agent state=restarted
+  #when: result|success
+
+- name: add iptables to dhcp port 
+  command: sudo {{ item }}
+  with_items:
+   - "iptables -I INPUT -p udp --dport 8472 -j ACCEPT"
+   - "/etc/init.d/iptables save"
+  #when: result|success

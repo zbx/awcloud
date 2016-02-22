@@ -8,7 +8,7 @@ host文件配置
 #云平台网络环境注意：
 #1、公开网如果没有做bond 可以直接执行
 #
-2、如果租户网有做bond的需要先创建一下ovs网桥：
+# 2、如果租户网有做bond的需要先创建一下ovs网桥：
 
 ovs-vsctl add-br br-p
 
@@ -40,7 +40,7 @@ physical_interface_mappings = physnet1:br-ex-lb
 #    
 #    
 #    2、执行：
-#    ansible-playbook -i hosts site.yml 
+#    ansible-playbook -i hosts site.yml
 #    
 #    参数：
 #    --list-hosts     查看匹配到的主机
@@ -86,7 +86,11 @@ Ext-Net-1 103.227.79.128/25  --enable_dhcp=False
 
 
 
+问题：
+rabbitmq没有修改 ：5672
 
+
+nova linuxnet_interface_修改
 
 
 

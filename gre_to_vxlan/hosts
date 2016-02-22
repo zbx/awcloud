@@ -9,5 +9,10 @@
 10.20.0.14
 10.20.0.12
 
+[compute:vars]
+manager_node=10.20.0.6
+vip=10.20.0.3
+
+
 [mysqldb]
 10.20.0.6

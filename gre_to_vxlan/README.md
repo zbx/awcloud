@@ -1,12 +1,23 @@
 
-host文件配置
+# host文件配置
 # 匹配host格式：
 # [controller]
 # node-[1:2] ansible_ssh_user=root ansible_ssh_pass=r00tme
 #  或者直接填写IP地址
-
+#
+#########vars rabbitmq config #########
+# 如果你的环境中有一台管理节点直接设置
+#  
+# rabbimq_host=manager1_ip:5673 即可
+#
+# 如果你的环境中有三台管理节点，需要设置变量
+#
+# rabbimq_host=manager1_ip:5673,manager2_ip:5673,manager3_ip:5673
+#
+#####################
+#
 #云平台网络环境注意：
-#1、公开网如果没有做bond 可以直接执行
+# 1、公开网如果没有做bond 可以直接执行
 #
 # 2、如果租户网有做bond的需要先创建一下ovs网桥：
 

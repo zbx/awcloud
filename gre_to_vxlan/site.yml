@@ -5,14 +5,18 @@
   roles:
     - ConfigNeutronDB
 
-- name: config controller 
+- name: config controller node
   hosts: controller
   roles:
-    - RemoveGre
     - ConfigVxlan
 
-- name: config dfsdsfds
+
+- name: config compute node
   hosts: compute
   roles:
     - compute
 
+- name: openstack cluster end config
+  hosts: mysqldb
+  roles:
+    - EndConfig

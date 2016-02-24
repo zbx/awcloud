@@ -5,9 +5,14 @@
 # chkconfig:   - 97 03
 # description: Support VLANs using Linux bridging helper
 ### END INIT INFO
+#
 
-netdev_ex=br-p
-netdev_prv=br-ovs-bond0
+
+# this is config a openstack public network interface name
+netdev_ex=br-ex
+
+# this is config a openstack tenant network interface name
+netdev_prv=br-eth3
 
 ex_lb="${netdev_ex}-lb"
 lb_ex="lb-${netdev_ex}"
@@ -40,7 +45,7 @@ status() {
     ip link show ${ex_lb}
     ip link show ${lb_ex}
     ip link show ${prv_lb}
-    ip link show ${lb_prv} 
+    ip link show ${lb_prv}
     ovs-vsctl port-to-br ${lb_ex}
     ovs-vsctl port-to-br ${lb_prv}
     echo physnet1:${ex_lb}
@@ -98,4 +103,3 @@ case "$1" in
         exit 2
 esac
 exit $?
-

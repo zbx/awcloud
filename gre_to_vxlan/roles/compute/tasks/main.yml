@@ -6,13 +6,16 @@
 
 
 - name: stop compute openvswitch
-  service: name=neutron-openvswitch-agent state=stopped
+  service: name=neutron-openvswitch-agent state=stopped enabled=no
   when: result|success
+
+- name: backup neuton file
+  shell: mv /etc/neutron /etc/neutron.bak
+  ignore_errors: True
 
 - name: copy neuton file to controller
   command: sudo {{ item }}
   with_items:
-   - "mv /etc/neutron /etc/neutron.bak"
    - "scp -r {{ manager_node }}:/etc/neutron /etc/neutron"
    - "chown neutron:neutron -R /etc/neutron"
   #when: result|success
@@ -30,7 +33,7 @@
   #when: result|success
 
 - name: start linuxbridge
-  service: name=neutron-linuxbridge-agent state=restarted
+  service: name=neutron-linuxbridge-agent state=restarted enabled=no
   #when: result|success
 
 - name: add iptables to dhcp port

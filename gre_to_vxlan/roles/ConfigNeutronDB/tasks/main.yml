@@ -16,3 +16,8 @@
   command: mysql -e 'use neutron;TRUNCATE TABLE ml2_gre_endpoints;'
   when: result|failed
 
+- name: stop neutron dhcp and l3 service to pacemaker
+  command: sudo {{ item }}
+  with_items:
+    - "crm resource stop p_neutron-dhcp-agent"
+    - "crm resource stop p_neutron-l3-agent"

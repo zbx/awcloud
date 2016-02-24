@@ -1,9 +1,17 @@
+step 1
 
-# host文件配置
-# 匹配host格式：
-# [controller]
-# node-[1:2] ansible_ssh_user=root ansible_ssh_pass=r00tme
-#  或者直接填写IP地址
+# 添加组：controller 和compute 和mysqldb组
+#    
+#    controller 是管理服务器
+#    compute    是计算节点
+#    mysqdb     是数据库服务器，一般会做重合，主要考虑一下数据库操作让一台主机操作就OK
+#
+# 如果执行的play_book的节点无法ssh无密码登录需要添加该选项
+#　例如
+#　[compute]
+#  10.20.0.16 ansible_ssh_user=root ansible_ssh_pass=r00tme
+#  
+#  或者直接填写IP地址推荐是用IP地址的形式
 #
 #########vars rabbitmq config #########
 # 如果你的环境中有一台管理节点直接设置
@@ -42,12 +50,9 @@ physical_interface_mappings = physnet1:br-ex-lb
 
 #重启linuxbrige-agent
 #
-#
-#    1、添加组：controller 和compute 和mysqldb组
-#    
-#    controller 是管理服务器
-#    compute    是计算节点
-#    mysqdb     是数据库服务器，一般会做重合，主要考虑一下数据库操作让一台主机操作就OK
+
+step 2
+
 #    
 #    
 #    2、执行：
@@ -77,9 +82,9 @@ neutron net-create Ext-Net-1 \
 
 neutron subnet-create  \
 --allocation-pool \
-start=103.227.79.135,end=103.227.79.254 \
---gateway 103.227.79.129  \
-Ext-Net-1 103.227.79.128/25  --enable_dhcp=False
+start=192.168.254.229,end=192.168.254.230 \
+--gateway 192.168.254.254  \
+Ext-Net-1 192.168.254.0/24  --enable_dhcp=False
 
 
 
